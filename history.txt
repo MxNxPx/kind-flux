@@ -1,0 +1,29 @@
+   67  cd kind-flux/
+   68  time (kind create cluster --config ./kind-config-1m2w-ingress.yaml --image kindest/node:v1.18.2 --wait 5m && kubectl wait --timeout=5m --for=condition=Ready nodes --all)
+   69  kubectl config current-context
+   70  flux check --pre
+   71  flux bootstrap github     --token-auth     --context=kind-kind     --owner=${GITHUB_USER}     --repository=${GITHUB_REPO}     --branch=main     --personal     --path=clusters/staging
+   84  helm ls -A
+   85  kubectl get po -A
+   86  watch flux get kustomizations
+   98  gpg --full-generate-key
+   99  gpg --list-secret-keys mxnxpx@gmail.com
+  100  gpg --export-secret-keys E7CF4CD5CF450951E01A60F6E165F0D2843CE1A8 | kubectl create secret generic sops-gpg --namespace=flux-system --from-file=sops.asc=/dev/stdin
+  105  git clone https://github.com/MxNxPx/flux2-kustomize-helm-example
+  106  cd flux2-kustomize-helm-example/
+  128  kubectl api-versions | grep flux
+  135  kubectl api-resources | grep -i flux
+  136  kubectl get gitrepositories -A
+  138  kubectl get hr -A
+  146  flux get sources git
+  147  flux reconcile source git flux-system
+  154  helm status -n nginx nginx-ingress-controller
+  166  watch flux get kustomizations
+  167  kubectl get po -A
+  168  flux get kustomizations
+  175  kubectl get events -n podinfo
+  179  helm history -n nginx nginx-ingress-controller
+  180  vi nginx/release.yaml 
+  181  git add -A .
+  182  git commit -m "updating nginx helm config"
+  258  watch 'helm ls -n nginx; helm history -n nginx nginx-ingress-controller | tail -3'

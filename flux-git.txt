@@ -1,0 +1,31 @@
+source flux.secret
+export GITHUB_TOKEN GITHUB_REPO GITHUB_USER
+
+#optional
+#git clone ssh://git@github.com/${GITHUB_USER}/${GITHUB_REPO}
+
+multipass shell ubuntu-multipass-flux
+cd kind-flux
+time (kind create cluster --config ./kind-config-1m2w-ingress.yaml --image kindest/node:v1.18.2 --wait 5m && kubectl wait --timeout=5m --for=condition=Ready nodes --all)
+
+#kubectl create secret generic flux-git-deploy --from-file=identity=./id_ed25519
+
+kubectl config current-context
+flux check --pre
+
+flux bootstrap github \
+    --token-auth \
+    --context=kind-kind \
+    --owner=${GITHUB_USER} \
+    --repository=${GITHUB_REPO} \
+    --branch=main \
+    --personal \
+    --path=clusters/staging
+
+#create entropy
+sudo rngd -r /dev/urandom
+cat /proc/sys/kernel/random/entropy_avail
+
+gpg --full-generate-key
+
+gpg --list-secret-keys mxnxpx@gmail.com
