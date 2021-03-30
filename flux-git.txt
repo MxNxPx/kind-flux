@@ -1,12 +1,12 @@
+cd kind-flux
+
 source flux.secret
 export GITHUB_TOKEN GITHUB_REPO GITHUB_USER
 
 #optional
 #git clone ssh://git@github.com/${GITHUB_USER}/${GITHUB_REPO}
 
-multipass shell ubuntu-multipass-flux
-cd kind-flux
-time (kind create cluster --config ./kind-config-1m2w-ingress.yaml --image kindest/node:v1.18.2 --wait 5m && kubectl wait --timeout=5m --for=condition=Ready nodes --all)
+time (kind create cluster --config ./kind-config-1m2w-ingress.yaml --image kindest/node:v1.18.2 --name staging --wait 5m && kubectl wait --timeout=5m --for=condition=Ready nodes --all)
 
 #kubectl create secret generic flux-git-deploy --from-file=identity=./id_ed25519
 
@@ -15,7 +15,7 @@ flux check --pre
 
 flux bootstrap github \
     --token-auth \
-    --context=kind-kind \
+    --context=kind-staging \
     --owner=${GITHUB_USER} \
     --repository=${GITHUB_REPO} \
     --branch=main \

@@ -14,65 +14,29 @@ pei "kubectl cluster-info"
 echo;echo
 pei "docker ps"
 echo;echo
-pei "time (kind create cluster --config ./kind-config-1m2w-ingress.yaml --image kindest/node:v1.18.2 --wait 5m && kubectl wait --timeout=5m --for=condition=Ready nodes --all)"
+pei "time (kind create cluster --config ./kind-config-1m2w-ingress.yaml --image kindest/node:v1.18.2 --name staging --wait 5m && kubectl wait --timeout=5m --for=condition=Ready nodes --all)"
+#pei "time (kind create cluster --config ./kind-config-1m2w-ingress.yaml --image kindest/node:v1.18.2 --name production --wait 5m && kubectl wait --timeout=5m --for=condition=Ready nodes --all)"
 pei "docker ps -a --format \"table {{.Names}}\\\t{{.Image}}\\\t{{.Status}}\""
 
 ## view cluster status
 pe "kubectl get nodes -o wide"
 pe "kubectl get pods -A"
-pe "kubectl create secret generic flux-git-deploy --from-file=identity=./id_ed25519"
 
-## try to deploy old deployment spec
+## bootstrap flux
 echo;echo
-p "[.] k8s deployment and pod placement"
-pei "cat nginx-deployment.yaml"
-pe "kubectl -n default apply -f nginx-deployment.yaml; kubectl -n default wait deploy/nginx --for=condition=available --timeout=120s"
+p "[.] bootstrap flux and git repo"
+#pe "kubectl create secret generic flux-git-deploy --from-file=identity=./id_ed25519"
+pe "flux bootstrap github --token-auth --context=kind-staging --owner=${GITHUB_USER} --repository=${GITHUB_REPO} --branch=main --personal --path=clusters/staging"
+#pe "flux bootstrap github --token-auth --context=kind-production --owner=${GITHUB_USER} --repository=${GITHUB_REPO} --branch=main --personal --path=clusters/staging"
 
-## verify working
-pe "kubectl -n default get deploy,pods -o wide"
-
-## oops, applied it again, what is the expected output
-pe "kubectl -n default apply -f nginx-deployment.yaml"
-pe "kubectl -n default get deploy,pods -o wide"
-
-## lets test draining a node
-echo;echo
-p "[*] in another window:  watch -t 'kubectl get -n default deploy; echo; kubectl -n default get pods -o wide --sort-by=.status.startTime'"
-pe "kubectl drain kind-worker --ignore-daemonsets"
-pe "kubectl uncordon kind-worker"
-
-echo;echo
-p "[.] kubernetes chaos engineering"
-
-## load the image into kind nodes
-pei "kind load image-archive kubethanos.tar"
-#or
-#kind load docker-image docker.local/kubethanos:1.0
-
-## scale up the innocent workload some more
-pe "kubectl -n default scale deployment/nginx --replicas=10; kubectl -n default wait deploy/nginx --for=condition=available --timeout=120s"
-
-## verify working
-pe "kubectl -n default get deploy,pods -o wide"
-
-## prepare for the snap!
-echo;echo
-p "[*] in another window:  watch -t 'kubectl get -n default deploy; echo; kubectl -n default get pods -o wide --sort-by=.status.startTime'"
-p "[*] in another window (execute after deploying kubethanos):  kubectl -n kube-system logs deploy/thanoskube -f"
-
-## deploy the yaml spec
-pe "kubectl apply -f kubethanos-infinitywar.yaml; kubectl -n kube-system wait deploy/thanoskube --for=condition=available --timeout=120s"
-
-## what will happen this time?
-pe "kubectl delete -f kubethanos-infinitywar.yaml"
-echo;echo
-p "[*] in another window (execute after re-deploying kubethanos):  kubectl -n kube-system logs deploy/thanoskube -f"
-pe "kubectl apply -f kubethanos-endgame.yaml"
+## create entropy
+#pe "sudo rngd -r /dev/urandom"
+#pe "cat /proc/sys/kernel/random/entropy_avail"
 
 PROMPT_TIMEOUT=0
 echo;echo
 MSG="THE WORK IS DONE."
-COW="./thanos.cow"
+COW="./sheep.cow"
 pe "echo \$MSG | cowsay -f \$COW"
 
-pe "kind delete cluster"
+#pe "kind delete cluster"
