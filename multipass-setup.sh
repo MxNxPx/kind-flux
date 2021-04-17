@@ -3,7 +3,7 @@ NAME=ubuntu-multipass-flux
 IMAGE=18.04
 CPU=2
 MEM=3G
-DISK=14G
+DISK=11G
 
 ## unset any proxy env vars
 unset PROXY HTTP_PROXY HTTPS_PROXY http_proxy https_proxy
@@ -25,7 +25,6 @@ sudo touch /etc/apt/sources.list.d/kubernetes.list
 echo "deb http://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list
 sudo apt-get update
 sudo apt-get install -y kubectl
-#curl -O https://storage.googleapis.com/golang/go1.13.linux-amd64.tar.gz
 curl -O "https://dl.google.com/go/$(curl https://golang.org/VERSION?m=text).linux-amd64.tar.gz"
 echo "export GOPATH=$HOME/go" >> ~/.bashrc
 echo "export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin" >> ~/.bashrc

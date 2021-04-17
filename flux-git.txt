@@ -39,6 +39,7 @@ flux bootstrap github \
     --personal \
     --path=clusters/production
 
+kubectl -n flux-system port-forward --address 0.0.0.0 svc/grafana 3000:3000
 
 #create entropy
 sudo rngd -r /dev/urandom
