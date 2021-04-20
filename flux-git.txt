@@ -10,6 +10,13 @@ time (kind create cluster --image kindest/node:v1.18.2 --name staging --wait 5m 
 
 #kubectl create secret generic flux-git-deploy --from-file=identity=./id_ed25519
 
+sudo mv /usr/local/bin/flux{,.latest}
+cd /tmp
+wget https://github.com/fluxcd/flux2/releases/download/v0.11.0/flux_0.11.0_linux_amd64.tar.gz
+tar -zxvf flux*tar.gz
+chmod 755 flux
+sudo mv flux /usr/local/bin
+
 kubectl config use-context kind-staging
 kubectl config current-context
 flux check --pre
@@ -21,7 +28,8 @@ flux bootstrap github \
     --repository=${GITHUB_REPO} \
     --branch=main \
     --personal \
-    --path=clusters/staging
+    --path=clusters/staging \
+    --verbose
 
 
 time (kind create cluster --config ./kind-config-1m2w-ingress.yaml --image kindest/node:v1.18.2 --name production --wait 5m && kubectl wait --timeout=5m --for=condition=Ready nodes --all)
