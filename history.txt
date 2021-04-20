@@ -27,3 +27,9 @@
   181  git add -A .
   182  git commit -m "updating nginx helm config"
   258  watch 'helm ls -n nginx; helm history -n nginx nginx-ingress-controller | tail -3'
+   45  flux suspend source git flux-system
+   51  flux logs
+   57  flux get sources all
+   60  flux resume source git flux-system
+  104  flux reconcile source git flux-system
+
