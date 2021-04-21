@@ -1,7 +1,7 @@
 cd kind-flux
 
 source flux.secret
-export GITHUB_TOKEN GITHUB_REPO GITHUB_USER
+export GITHUB_TOKEN GITHUB_REPO GITHUB_USER GITHUB_PWD
 
 #optional
 #git clone https://github.com/${GITHUB_USER}/${GITHUB_REPO}
@@ -20,6 +20,17 @@ sudo mv flux /usr/local/bin
 kubectl config use-context kind-staging
 kubectl config current-context
 flux check --pre
+
+flux bootstrap git \
+    --token-auth=true \
+    --context=kind-staging \
+    --url=https://github.com/${GITHUB_USER}/${GITHUB_REPO} \
+    --username=${GITHUB_USER} \
+    --password=${GITHUB_PWD} \
+    --branch=main \
+    --path=clusters/staging \
+    --verbose
+
 
 flux bootstrap github \
     --token-auth \
