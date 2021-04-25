@@ -6,7 +6,7 @@ export GITHUB_TOKEN GITHUB_REPO GITHUB_USER GITHUB_PWD
 #optional
 #git clone https://github.com/${GITHUB_USER}/${GITHUB_REPO}
 
-time (kind create cluster --image kindest/node:v1.18.2 --name staging --wait 5m && kubectl wait --timeout=5m --for=condition=Ready nodes --all)
+time (kind create cluster --image kindest/node:v1.19.7 --name staging --wait 5m && kubectl wait --timeout=5m --for=condition=Ready nodes --all)
 
 #kubectl create secret generic flux-git-deploy --from-file=identity=./id_ed25519
 
@@ -43,7 +43,7 @@ flux bootstrap github \
     --verbose
 
 
-time (kind create cluster --config ./kind-config-1m2w-ingress.yaml --image kindest/node:v1.18.2 --name production --wait 5m && kubectl wait --timeout=5m --for=condition=Ready nodes --all)
+time (kind create cluster --config ./kind-config-1m2w-ingress.yaml --image kindest/node:v1.19.7 --name production --wait 5m && kubectl wait --timeout=5m --for=condition=Ready nodes --all)
 
 kubectl config use-context kind-production
 kubectl config current-context
