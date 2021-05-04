@@ -2,8 +2,8 @@
 NAME=ubuntu-multipass-flux
 IMAGE=18.04
 CPU=2
-MEM=3G
-DISK=11G
+MEM=4G
+DISK=20G
 
 ## unset any proxy env vars
 unset PROXY HTTP_PROXY HTTPS_PROXY http_proxy https_proxy
@@ -31,7 +31,7 @@ echo "export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin" >> ~/.bashrc
 tar -xf go*.linux-amd64.tar.gz
 sudo chown -R root:root ./go
 sudo mv go /usr/local
-curl -s https://toolkit.fluxcd.io/install.sh | sudo bash
+curl -s https://fluxcd.io/install.sh | sudo bash
 GO111MODULE="on" /usr/local/go/bin/go get -u -v sigs.k8s.io/kind
 GO111MODULE="on" /usr/local/go/bin/go get github.com/mikefarah/yq/v4
 GO111MODULE="on" /usr/local/go/bin/go get sigs.k8s.io/kustomize/kustomize/v3
