@@ -1,10 +1,24 @@
+cd kind-flux
+
 source flux.secret
 export GITHUB_TOKEN GITHUB_REPO GITHUB_USER GITHUB_PWD
 
-### staging
+#optional
+#git clone https://github.com/${GITHUB_USER}/${GITHUB_REPO}
+
 time (kind create cluster --image kindest/node:v1.19.7 --name staging --wait 5m && kubectl wait --timeout=5m --for=condition=Ready nodes --all)
 
+#kubectl create secret generic flux-git-deploy --from-file=identity=./id_ed25519
+
+sudo mv /usr/local/bin/flux{,.latest}
+cd /tmp
+wget https://github.com/fluxcd/flux2/releases/download/v0.11.0/flux_0.11.0_linux_amd64.tar.gz
+tar -zxvf flux*tar.gz
+chmod 755 flux
+sudo mv flux /usr/local/bin
+
 kubectl config use-context kind-staging
+kubectl config current-context
 flux check --pre
 
 flux bootstrap git \
@@ -17,10 +31,22 @@ flux bootstrap git \
     --path=clusters/staging \
     --verbose
 
-### production
+
+flux bootstrap github \
+    --token-auth \
+    --context=kind-staging \
+    --owner=${GITHUB_USER} \
+    --repository=${GITHUB_REPO} \
+    --branch=main \
+    --personal \
+    --path=clusters/staging \
+    --verbose
+
+
 time (kind create cluster --config ./kind-config-1m2w-ingress.yaml --image kindest/node:v1.19.7 --name production --wait 5m && kubectl wait --timeout=5m --for=condition=Ready nodes --all)
 
 kubectl config use-context kind-production
+kubectl config current-context
 flux check --pre
 
 flux bootstrap github \
@@ -32,7 +58,14 @@ flux bootstrap github \
     --personal \
     --path=clusters/production
 
-echo;date; flux get sources all; flux get ks -A; flux get hr -A; helm ls -A; kubectl get po -A
+kubectl -n flux-system port-forward --address 0.0.0.0 svc/grafana 3000:3000
 
-kubectl -n kube-system port-forward --address 0.0.0.0 deploy/kube-prometheus-stack-grafana 3000:3000
-kubectl -n gatekeeper-system port-forward --address 0.0.0.0 svc/gatekeeper-policy-manager 8080:80
+#create entropy
+sudo rngd -r /dev/urandom
+cat /proc/sys/kernel/random/entropy_avail
+
+gpg --full-generate-key
+
+gpg --list-secret-keys mxnxpx@gmail.com
+
+
