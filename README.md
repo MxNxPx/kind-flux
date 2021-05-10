@@ -1,6 +1,6 @@
 # kind-flux
 
-structure of this git repo involves a "_shared_" cluster section where base cluster components are defined
+structure of the flux git repo that is levereged involves a "_shared_" cluster section where base cluster components are defined
 
 then there is a section for each cluster definition that references the "_shared_" component or overrides with specific details
 
