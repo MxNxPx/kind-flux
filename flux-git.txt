@@ -2,7 +2,7 @@ source flux.secret
 export GITHUB_TOKEN GITHUB_REPO GITHUB_USER GITHUB_PWD
 
 ### staging
-time (kind create cluster --image kindest/node:v1.19.7 --name staging --wait 5m && kubectl wait --timeout=5m --for=condition=Ready nodes --all)
+time (kind create cluster --config ./kind-config-ingress.yaml --image kindest/node:v1.19.7 --name staging --wait 5m && kubectl wait --timeout=5m --for=condition=Ready nodes --all)
 
 kubectl config use-context kind-staging
 flux check --pre
@@ -36,3 +36,9 @@ echo;date; flux get sources all; flux get ks -A; flux get hr -A; helm ls -A; kub
 
 kubectl -n kube-system port-forward --address 0.0.0.0 deploy/kube-prometheus-stack-grafana 3000:3000
 kubectl -n gatekeeper-system port-forward --address 0.0.0.0 svc/gatekeeper-policy-manager 8080:80
+
+## get multipass ip and docker network range for ingress and metallb
+ip -o addr show up primary scope global | while read -r num dev fam addr rest; do echo ${addr%/*}; done | grep "10.*" | head -1
+docker network inspect -f '{{.IPAM.Config}}' kind
+
+#kubectl create ns ingress-nginx && kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/kind/deploy.yaml
