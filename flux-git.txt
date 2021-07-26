@@ -42,3 +42,65 @@ ip -o addr show up primary scope global | while read -r num dev fam addr rest; d
 docker network inspect -f '{{.IPAM.Config}}' kind
 
 #kubectl create ns ingress-nginx && kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/kind/deploy.yaml
+
+wget https://github.com/bitnami-labs/sealed-secrets/releases/download/v0.16.0/kubeseal-linux-amd64 -O kubeseal && sudo install -m 755 kubeseal /usr/local/bin/kubeseal
+kubeseal  --controller-name=sealed-secrets  --controller-namespace=kube-system  --fetch-cert > /tmp/cluster-ss.pem
+
+
+## Generate a GPG/OpenPGP key with no passphrase (%no-protection)
+export KEY_NAME="staging"
+export KEY_COMMENT="flux secrets"
+
+gpg --batch --full-generate-key <<EOF
+%no-protection
+Key-Type: 1
+Key-Length: 4096
+Subkey-Type: 1
+Subkey-Length: 4096
+Expire-Date: 0
+Name-Comment: ${KEY_COMMENT}
+Name-Real: ${KEY_NAME}
+EOF
+
+## Retrieve the GPG key fingerprint (second row of the sec column)
+## Store the key fingerprint as an environment variable:
+export KEY_FP=$(gpg --list-secret-keys "${KEY_NAME}" | sed -n '/^sec/{n;p}' | awk '{print $NF}'|tail -1) && echo $KEY_FP
+
+## Export the public and private keypair from your local GPG keyring and create a Kubernetes secret named sops-gpg in the flux-system namespace:
+gpg --export-secret-keys --armor "${KEY_FP}" |
+kubectl create secret generic sops-gpg \
+--namespace=flux-system \
+--from-file=sops.asc=/dev/stdin
+
+## create sops config from template
+cat sops-template.yaml | envsubst > .sops.yaml
+
+## encrypt secrets
+for i in $(ls -1 manifests/*); do echo "[*] $i"; sops --encrypt --in-place $i; done
+
+## back up this secret-key/K8s-Secret with a password manager or offline storage
+gpg --export --armor "${KEY_FP}" > ./.sops.pub.asc
+gpg --export ${KEY_FP} > public.key
+gpg --export-secret-key $KEY_FP > private.key
+#copy *.key files off somewhere and then delete
+rm *.key
+
+## (OPTIONAL) delete the secret decryption key from your machine
+gpg --delete-secret-keys "${KEY_FP}"
+
+## (OPTIONAL) import backup gpg keys
+gpg --import private.key
+gpg --import public.key
+
+## create new gpg key (see cmd above), get fingerprint, and update .sops files
+#gpg --batch ...
+export KEY_FP=$(gpg --list-secret-keys "${KEY_NAME}" | sed -n '/^sec/{n;p}' | awk '{print $NF}'|tail -1) && echo $KEY_FP
+gpg --export --armor "${KEY_FP}" > ./.sops.pub.asc
+cat sops-template.yaml | envsubst > .sops.yaml
+
+## update flux sop secret
+gpg --export-secret-keys --armor "${KEY_FP}" | ...
+
+## rotate secrets
+for i in $(ls -1 manifests/*); do echo "[*] $i"; sops updatekeys -y $i; done
+
