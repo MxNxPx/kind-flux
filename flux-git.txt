@@ -104,3 +104,9 @@ gpg --export-secret-keys --armor "${KEY_FP}" | ...
 ## rotate secrets
 for i in $(ls -1 manifests/*); do echo "[*] $i"; sops updatekeys -y $i; done
 
+
+## keda and prometheus
+helm repo add kedacore https://kedacore.github.io/charts
+helm install keda kedacore/keda --namespace kube-system --version 2.3.2
+KUBE_TOKEN=$(kubectl get -n kube-system secret kube-prometheus-stack-prometheus-token-d4mqr -ojsonpath='{.data.token}' | base64 -d)
+curl -sSk -H "Authorization: Bearer $KUBE_TOKEN" 'https://172.18.0.2:10250/metrics'
